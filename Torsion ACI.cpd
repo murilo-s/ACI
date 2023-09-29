@@ -1,0 +1,210 @@
+'<h3>''ACI 318 - 19 Torsion</h3>'
+
+'<h4>''Forces</h4>
+T_u = ? {1050}kip*ft
+V_u,major = ? {200}kip
+V_u,minor = ? {70}kip
+V_u = sqrt(V_u,major^2 + V_u,minor^2)
+
+'<h4>''Input: Geometry, Concrete and Reinforcement</h4>
+b_w = ? {48}in
+h = ? {72}in
+C_c = ? {2}in
+f_c = ? {5}ksi
+f_y = ? {60}ksi
+f_yt = ? {60}ksi
+n_legs,shear,major = ? {5}
+n_legs,shear,minor = ? {5}
+'Longitudinal: <select name="longitudinal">
+'<option value="3">#3</option>
+'<option value="4">#4</option>
+'<option value="5">#5</option>
+'<option value="6">#6</option>
+'<option value="7">#7</option>
+'<option value="8">#8</option>
+'<option value="9">#9</option>
+'<option value="10">#10</option>
+'<option value="11">#11</option>
+'<option value="14">#14</option>
+'<option value="18">#18</option>
+'</select>
+'<p id="longitudinal"> Values:'øl = ? {11}in'</p>
+'Transverse Shear: <select name="transverse_shear">
+'<option value="3">#3</option>
+'<option value="4">#4</option>
+'<option value="5">#5</option>
+'<option value="6">#6</option>
+'<option value="7">#7</option>
+'<option value="8">#8</option>
+'<option value="9">#9</option>
+'<option value="10">#10</option>
+'<option value="11">#11</option>
+'<option value="14">#14</option>
+'<option value="18">#18</option>
+'</select>
+'<p id="transverse_shear"> Values:'øv = ? {5}in'</p>
+'Transverse Torsion: <select name="transverse_torsion">
+'<option value="3">#3</option>
+'<option value="4">#4</option>
+'<option value="5">#5</option>
+'<option value="6">#6</option>
+'<option value="7">#7</option>
+'<option value="8">#8</option>
+'<option value="9">#9</option>
+'<option value="10">#10</option>
+'<option value="11">#11</option>
+'<option value="14">#14</option>
+'<option value="18">#18</option>
+'</select>
+'<p id="transverse_torsion"> Values:'øt = ? {5}in'</p>
+ø_l = øl/8
+ø_v = øv/8
+ø_t = øt/8
+
+'<div class="fold">
+'<h4>Calculation Data</h4>
+λ = 1
+Φ = 0.75' - Table 21.2.1
+θ = 45deg' - 22.7.6.1.2
+d_major = h - C_c - ø_t - ø_l/2
+d_minor = b_w - C_c - ø_t - ø_l/2
+A_cp = b_w*h' - Area enclosed by outside perimeter of section
+A_oh = (b_w - C_c*2 - ø_t)*(h - C_c*2 - ø_t)' - Area enclosed by centerline of closed tie
+A_o = 0.85*A_oh' - Gross area enclosed by shear flow path
+P_cp = 2*(b_w + h)' - Outside perimeter of concrete section
+P_h = 2*((b_w - C_c*2 - ø_t) + (h - C_c*2 - ø_t))' - Perimeter of centerline of closed tie
+A_l = pi*ø_l^2/4' - Area of torsion longitudinal leg
+A_v = pi*ø_v^2/4' - Area of shear stirrup leg
+A_t = pi*ø_t^2/4' - Area of torsion stirrup leg
+V_c,major = 2*λ*(sqrt(f_c*(1/1psi))*1psi)*b_w*d_major
+V_c,minor = 2*λ*(sqrt(f_c*(1/1psi))*1psi)*h*d_minor
+V_c = min(V_c,major; V_c,minor)
+Φ*V_c
+'</div>
+'<div class="fold">
+'<h4>''Threshold and Cracking Torsion</h4>
+T_th = λ*(sqrt(f_c/1psi)*1psi)*(A_cp^2/P_cp)
+T_cr = 4*λ*(sqrt(f_c/1psi)*1psi)*(A_cp^2/P_cp)
+Φ*T_th
+Φ*T_cr
+#if T_u ≥ Φ*T_th
+	'<strong>''Torsion must be considered.</strong>
+	
+	A_t,min = max(0.75*(sqrt(f_c/1psi)*1psi); 50psi)*max(b_w; h)/f_yt*12in|in^2'/ft - Table 9.6.3.4
+#else
+	'Torsion can be neglected.
+	A_t,min = 0in^2'/ft - Table 9.6.3.4
+#end if
+'</div>
+'<div class="fold">
+'<h4>''Cross-sectional Limits</h4>
+#hide
+Section_majorshear,major = ((V_u,major/(b_w*d_major))*(1/1psi))
+Section_minorshear,minor = ((V_u,minor/(h*d_minor))*(1/1psi))
+Section_shear,major = ((V_u/(b_w*d_major))*(1/1psi))
+Section_shear,minor = ((V_u/(h*d_minor))*(1/1psi))
+
+Section_torsion = ((((T_u*P_h)/(1.7lbf*((A_oh*(1/1in^2))^2)*1in^2))))
+
+Section_total,majorshear = sqrt(Section_majorshear,major^2 + Section_torsion^2)*1psi|psi
+Section_total,minorshear = sqrt(Section_minorshear,minor^2 + Section_torsion^2)*1psi|psi
+Section_total,major = sqrt(Section_shear,major^2 + Section_torsion^2)*1psi|psi
+Section_total,minor = sqrt(Section_shear,minor^2 + Section_torsion^2)*1psi|psi
+
+Section_max,majorshear = Φ*((V_c,major/(b_w*d_major)) + 8*(sqrt(f_c/1psi)*1psi))|psi
+Section_max,minorshear = Φ*((V_c,minor/(h*d_minor)) + 8*(sqrt(f_c/1psi)*1psi))|psi
+Section_max,major = Φ*((V_c/(b_w*d_major)) + 8*(sqrt(f_c/1psi)*1psi))|psi
+Section_max,minor = Φ*((V_c/(h*d_minor)) + 8*(sqrt(f_c/1psi)*1psi))|psi
+
+#show
+Section_total = max(Section_total,majorshear; Section_total,minorshear; Section_total,major; Section_total,minor)|psi
+Section_max = min(Section_max,majorshear; Section_max,minorshear; Section_max,major; Section_max,minor)|psi
+#if Section_total ≥ Section_max
+	'<span class="err">''Change cross section!</span>
+	#break
+#else
+	'OK!
+#end if
+'</div>
+'<div class="fold">
+'<h4>''Transverse Reinforcement for Major Axis Shear</h4>
+#if Φ*V_c ≥ V_u,major
+	V_s,major = 0kip' - Eq. 22.5.8.1
+#else
+	V_s,major = V_u,major/Φ - V_c|kip' - Eq. 22.5.8.1
+#end if
+A_v,calc,major = (V_s,major/(f_yt*d_major))*1ft|in^2'/ft - Eq. 22.5.8.5.3
+#if V_u,major ≥ Φ*λ*(sqrt(f_c/1psi)*1psi)*b_w*d_major
+	A_v,min,major = max(0.75*(sqrt(f_c/1psi)*1psi); 50psi)*b_w/f_yt*12in|in^2'/ft - Table 9.6.3.4
+#else
+	A_v,min,major = 0in^2'/ft - Table 9.6.3.4
+#end if
+A_v,req,major = max(A_v,calc,major; A_v,min,major)'/ft
+A_v,req,major,leg = A_v,req,major/n_legs,shear,major'/ft/leg
+'</div>
+'<div class="fold">
+'<h4>''Transverse Reinforcement for Minor Axis Shear</h4>
+#if Φ*V_c ≥ V_u,minor
+	V_s,minor = 0kip' - Eq. 22.5.8.1
+#else
+	V_s,minor = V_u,minor/Φ - V_c|kip' - Eq. 22.5.8.1
+#end if
+A_v,calc,minor = (V_s,minor/(f_yt*d_minor))*1ft|in^2'/ft - Eq. 22.5.8.5.3
+#if V_u,minor ≥ Φ*λ*(sqrt(f_c/1psi)*1psi)*h*d_minor
+	A_v,min,minor = max(0.75*(sqrt(f_c/1psi)*1psi); 50psi)*h/f_yt*12in|in^2'/ft - Table 9.6.3.4
+#else
+	A_v,min,minor = 0in^2'/ft - Table 9.6.3.4
+#end if
+A_v,req,minor = max(A_v,calc,minor; A_v,min,minor)'/ft
+A_v,req,minor,leg = A_v,req,minor/n_legs,shear,minor'/ft/leg
+'<hr />
+A_v,req = max(A_v,req,major; A_v,req,minor)
+A_v,req,leg = max(A_v,req,major,leg; A_v,req,minor,leg)'/ft/leg
+'</div>
+'<div class="fold">
+'<h4>''Transverse Reinforcement for Torsion</h4>
+A_t,calc,leg = T_u*1ft/(2*Φ*A_o*f_yt*cot(θ))|in^2'/ft/leg - Eq. 22.7.6.1
+
+A_t,req,leg = max(A_t,min; A_t,calc,leg + A_v,req,leg)'/ft/leg
+
+'</div>
+'<div class="fold">
+'<h4>''Summary</h4>
+A_v,req,leg'/ft/leg
+A_t,req,leg'/ft/leg
+
+'<h5>''Maximum Spacing of legs of shear reinforcement - Table 9.7.6.2.2</h5>
+#if or(V_s,major > 4*(sqrt(f_c/1psi)*1psi)*b_w*d_major; V_s,minor > 4*(sqrt(f_c/1psi)*1psi)*h*d_minor)
+	s_v,max = floor(min(d_major/4; d_minor/4; 12in))
+#else
+	s_v,max = floor(min(d_major/2; d_minor/2; 24in))
+#end if
+s_t,max = floor(min(P_h/8; 12in))
+s_lateral,max = floor(min(16*ø_l; 48*ø_v; 48*ø_t; b_w; h))
+
+s_max = min(s_v,max; s_t,max; s_lateral,max)
+s_t,req = floor(A_t/(A_t,req,leg/12))*1in
+s_v,req = floor(A_v/(A_v,req,leg/12))*1in
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
